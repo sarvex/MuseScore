@@ -54,7 +54,7 @@ def generate_interface(defs,
     if sdk is not None:
         command.extend(['-isysroot', sdk])
     for include in includes:
-        command.extend(['-I' + include])
+        command.extend([f'-I{include}'])
     command.append(defs)
     subprocess.check_call(command)
 

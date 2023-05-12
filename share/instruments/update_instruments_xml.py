@@ -48,33 +48,29 @@ def download_google_spreadsheet(sheet):
         assert r.status_code == 200
         with open(path, 'wb') as f:
             f.write(r.content)
-        eprint('Spreadsheet saved to ' + path)
+        eprint(f'Spreadsheet saved to {path}')
     return path
 
 def table_from_tsv(filename):
     with open(filename, 'r') as f:
-        return [ row for row in csv.reader(f, delimiter='\t') ]
+        return list(csv.reader(f, delimiter='\t'))
 
 def data_by_heading(table, headings_row=0):
     headings = table[headings_row]
     rows = []
     for entry in table[headings_row+1:]:
-        data = {}
-        for idx, col in enumerate(entry):
-            data[headings[idx]] = col
+        data = {headings[idx]: col for idx, col in enumerate(entry)}
         rows.append(data)
     return rows
 
 def index_by_column(rows, primary_index_col, secondary_index_col=None):
     data = {}
-    if secondary_index_col is None:
-        for row in rows:
-            primary = row[primary_index_col]
+    for row in rows:
+        primary = row[primary_index_col]
+        if secondary_index_col is None:
             assert primary not in data
             data[primary] = row
-    else:
-        for row in rows:
-            primary = row[primary_index_col]
+        else:
             secondary = row[secondary_index_col]
             if primary not in data:
                 data[primary] = {}
@@ -130,12 +126,10 @@ def pitch_range(el, instrument, min_key, max_key, range_tag):
     min_val = instrument[min_key]
     max_val = instrument[max_key]
     if min_val and max_val and min_val != null and max_val != null:
-        ET.SubElement(el, range_tag).text = min_val + '-' + max_val
+        ET.SubElement(el, range_tag).text = f'{min_val}-{max_val}'
 
 def to_list(str):
-    if str:
-        return str.split(list_sep)
-    return []
+    return str.split(list_sep) if str else []
 
 # Add genres to XML tree
 for genre in genres.values():
@@ -346,7 +340,7 @@ with open('instruments.xml', 'w', newline='\n', encoding='utf-8') as f:
 # Helper functions to facilitate writing instrumentsxml.h
 def add_translatable_string(f: io.TextIOWrapper, context: str, text: str, disambiguation: str = '', comment: str = ''):
     if comment:
-        f.write('//: ' + comment + '\n')
+        f.write(f'//: {comment}' + '\n')
     if disambiguation:
         f.write('QT_TRANSLATE_NOOP3("{context}", "{text}", "{disambiguation}"),\n'
                 .format(context=context, text=text, disambiguation=disambiguation))
@@ -359,7 +353,7 @@ def add_translatable_string_if_not_null(f: io.TextIOWrapper, context: str, text:
         add_translatable_string(f, context, text, disambiguation, comment)
 
 def disambiguation(instrumentId: str, nameType: str):
-    return instrumentId + ' ' + nameType
+    return f'{instrumentId} {nameType}'
 
 
 hintComment = 'Please see https://github.com/musescore/MuseScore/wiki/Translating-instrument-names'

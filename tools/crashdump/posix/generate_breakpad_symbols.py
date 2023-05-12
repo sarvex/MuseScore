@@ -42,7 +42,7 @@ def GetDumpSymsBinary(build_dir=None):
   DUMP_SYMS = 'dump_syms'
   dump_syms_bin = os.path.join(os.path.expanduser(build_dir), DUMP_SYMS)
   if not os.access(dump_syms_bin, os.X_OK):
-    print('Cannot find %s.' % dump_syms_bin)
+    print(f'Cannot find {dump_syms_bin}.')
     return None
 
   return dump_syms_bin
@@ -75,9 +75,8 @@ def GetSharedLibraryDependenciesLinux(binary):
   lib_re = re.compile('\t.* => (.+) \(.*\)$')
   result = []
   for line in ldd.splitlines():
-    m = lib_re.match(line)
-    if m:
-      result.append(os.path.abspath(m.group(1)))
+    if m := lib_re.match(line):
+      result.append(os.path.abspath(m[1]))
   return result
 
 
@@ -94,9 +93,8 @@ def _GetSharedLibraryDependenciesAndroidOrChromeOS(binary):
   result = []
   binary_path = os.path.dirname(os.path.abspath(binary))
   for line in readelf.splitlines():
-    m = lib_re.search(line)
-    if m:
-      lib = os.path.join(binary_path, m.group(1))
+    if m := lib_re.search(line):
+      lib = os.path.join(binary_path, m[1])
       if os.access(lib, os.X_OK):
         result.append(lib)
   return result
@@ -162,8 +160,7 @@ def GetSharedLibraryDependenciesMac(binary, exe_path):
   if os.path.exists(hermetic_otool_path):
     otool_path = hermetic_otool_path
   else:
-    developer_dir = GetDeveloperDirMac()
-    if developer_dir:
+    if developer_dir := GetDeveloperDirMac():
       env['DEVELOPER_DIR'] = developer_dir
     otool_path = 'otool'
 
@@ -174,13 +171,13 @@ def GetSharedLibraryDependenciesMac(binary, exe_path):
   for idx, line in enumerate(otool):
     if line.find('cmd LC_RPATH') != -1:
       m = re.match(' *path (.*) \(offset .*\)$', otool[idx+2])
-      rpath = m.group(1)
+      rpath = m[1]
       rpath = rpath.replace('@loader_path', loader_path)
       rpath = rpath.replace('@executable_path', exe_path)
       rpaths.append(rpath)
     elif line.find('cmd LC_ID_DYLIB') != -1:
       m = re.match(' *name (.*) \(offset .*\)$', otool[idx+2])
-      dylib_id = m.group(1)
+      dylib_id = m[1]
   # `man dyld` says that @rpath is resolved against a stack of LC_RPATHs from
   # all executable images leading to the load of the current module. This is
   # intentionally not implemented here, since we require that every .dylib
@@ -192,20 +189,18 @@ def GetSharedLibraryDependenciesMac(binary, exe_path):
   lib_re = re.compile('\t(.*) \(compatibility .*\)$')
   deps = []
   for line in otool:
-    m = lib_re.match(line)
-    if m:
+    if m := lib_re.match(line):
       # For frameworks and shared libraries, `otool -L` prints the LC_ID_DYLIB
       # as the first line. Filter that out.
-      if m.group(1) == dylib_id:
+      if m[1] == dylib_id:
         continue
-      dep = Resolve(m.group(1), exe_path, loader_path, rpaths)
-      if dep:
+      if dep := Resolve(m[1], exe_path, loader_path, rpaths):
         deps.append(os.path.normpath(dep))
       else:
-        print((
-            'ERROR: failed to resolve %s, exe_path %s, loader_path %s, '
-            'rpaths %s' % (m.group(1), exe_path, loader_path,
-                           ', '.join(rpaths))), file=sys.stderr)
+        print(
+            f"ERROR: failed to resolve {m[1]}, exe_path {exe_path}, loader_path {loader_path}, rpaths {', '.join(rpaths)}",
+            file=sys.stderr,
+        )
         sys.exit(1)
   return deps
 
@@ -233,13 +228,12 @@ def GetSharedLibraryDependencies(options, binary, exe_path):
     print("Platform not supported.")
     sys.exit(1)
 
-  result = []
   build_dir = os.path.abspath(options.build_dir)
-  for dep in deps:
-    if (os.access(dep, os.X_OK) and
-        os.path.abspath(os.path.dirname(dep)).startswith(build_dir)):
-      result.append(dep)
-  return result
+  return [
+      dep for dep in deps
+      if (os.access(dep, os.X_OK)
+          and os.path.abspath(os.path.dirname(dep)).startswith(build_dir))
+  ]
 
 
 def GetTransitiveDependencies(options):
@@ -252,9 +246,8 @@ def GetTransitiveDependencies(options):
     deps = set(GetSharedLibraryDependencies(options, binary, exe_path))
     deps.add(binary)
     return list(deps)
-  elif (options.platform == 'darwin' or options.platform == 'android' or
-        options.platform == 'chromeos'):
-    binaries = set([binary])
+  elif options.platform in ['darwin', 'android', 'chromeos']:
+    binaries = {binary}
     q = [binary]
     while q:
       deps = GetSharedLibraryDependencies(options, q.pop(0), exe_path)
@@ -271,9 +264,8 @@ def mkdir_p(path):
   try:
     os.makedirs(path)
   except OSError as e:
-    if e.errno == errno.EEXIST and os.path.isdir(path):
-      pass
-    else: raise
+    if e.errno != errno.EEXIST or not os.path.isdir(path):
+      raise
 
 
 def GetBinaryInfoFromHeaderInfo(header_info):
@@ -289,7 +281,7 @@ def CreateSymbolDir(options, output_dir, relative_hash_dir):
   """Create the directory to store breakpad symbols in. On Android/Linux, we
      also create a symlink in case the hash in the binary is missing."""
   mkdir_p(output_dir)
-  if options.platform == 'android' or options.platform == 'linux':
+  if options.platform in ['android', 'linux']:
     try:
       os.symlink(relative_hash_dir, os.path.join(os.path.dirname(output_dir),
                  '000000000000000000000000000000000'))
@@ -334,14 +326,14 @@ def GenerateSymbols(options, binaries):
           # See if the output file already exists.
           output_dir = os.path.join(options.symbols_dir, binary_info.name,
                                     binary_info.hash)
-          output_path = os.path.join(output_dir, binary_info.name + '.sym')
+          output_path = os.path.join(output_dir, f'{binary_info.name}.sym')
           if os.path.isfile(output_path):
             should_dump_syms = False
             reason = "Symbol file already found."
             break
 
           # See if there is a symbol file already found next to the binary
-          potential_symbol_files = glob.glob('%s.breakpad*' % binary)
+          potential_symbol_files = glob.glob(f'{binary}.breakpad*')
           for potential_symbol_file in potential_symbol_files:
             with open(potential_symbol_file, 'rt') as f:
               symbol_info = GetBinaryInfoFromHeaderInfo(f.readline())
@@ -355,12 +347,12 @@ def GenerateSymbols(options, binaries):
         if not should_dump_syms:
           if options.verbose:
             with print_lock:
-              print("Skipping %s (%s)" % (binary, reason))
+              print(f"Skipping {binary} ({reason})")
           continue
 
         if options.verbose:
           with print_lock:
-            print("Generating symbols for %s" % binary)
+            print(f"Generating symbols for {binary}")
 
         CreateSymbolDir(options, output_dir, binary_info.hash)
         with open(output_path, 'wb') as f:
@@ -426,7 +418,7 @@ def main():
     return 1
 
   if not os.access(options.binary, os.X_OK):
-    print("Cannot find %s." % options.binary)
+    print(f"Cannot find {options.binary}.")
     return 1
 
   if options.clear:
@@ -443,5 +435,5 @@ def main():
   return 0
 
 
-if '__main__' == __name__:
+if __name__ == '__main__':
   sys.exit(main())

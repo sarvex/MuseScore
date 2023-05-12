@@ -34,10 +34,10 @@ def create_tsv(fname, indexes):
         write_indexes(writer, indexes)
 
 def load_translations(file):
-    translations = {}
-    for message in ET.parse(file).getroot().findall('context/message'):
-        translations[message.find('source').text] = message.find('translation').text
-    return translations
+    return {
+        message.find('source').text: message.find('translation').text
+        for message in ET.parse(file).getroot().findall('context/message')
+    }
 
 def find_text(element, tagName, default='[null]'):
     tag = element.find(tagName)

@@ -47,8 +47,9 @@ def _fix_user_implementation(implementation, fixed_implementation, header,
 
     if fixed_header is not None:
         contents = contents.replace(
-            '#include "%s"' % os.path.basename(header),
-            '#include "%s"' % os.path.basename(fixed_header))
+            f'#include "{os.path.basename(header)}"',
+            f'#include "{os.path.basename(fixed_header)}"',
+        )
 
     if fixed_implementation is None:
         file.seek(0)
@@ -114,8 +115,9 @@ extern
 
     if fixed_header is not None:
         contents = contents.replace(
-            '#include "%s"' % os.path.basename(header),
-            '#include "%s"' % os.path.basename(fixed_header))
+            f'#include "{os.path.basename(header)}"',
+            f'#include "{os.path.basename(fixed_header)}"',
+        )
 
     if fixed_implementation is None:
         file.seek(0)

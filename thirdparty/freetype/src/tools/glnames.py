@@ -4920,8 +4920,8 @@ class StringTable:
 
   def dump( self, file ):
     write = file.write
-    write( "  static const char  " + self.master_table +
-           "[" + repr( self.total ) + "] =\n" )
+    write((f"  static const char  {self.master_table}[{repr(self.total)}" +
+           "] =\n"))
     write( "  {\n" )
 
     line = ""
@@ -4934,18 +4934,17 @@ class StringTable:
 
   def dump_sublist( self, file, table_name, macro_name, sublist ):
     write = file.write
-    write( "#define " + macro_name + "  " + repr( len( sublist ) ) + "\n\n" )
+    write(f"#define {macro_name}  {repr(len(sublist))}" + "\n\n")
 
-    write( "  /* Values are offsets into the `" +
-           self.master_table + "' table */\n\n" )
-    write( "  static const short  " + table_name +
-           "[" + macro_name + "] =\n" )
+    write(f"  /* Values are offsets into the `{self.master_table}" +
+          "' table */\n\n")
+    write(f"  static const short  {table_name}[{macro_name}" + "] =\n")
     write( "  {\n" )
 
-    line  = "    "
     comma = ""
     col   = 0
 
+    line = "    "
     for name in sublist:
       line += comma
       line += "%4d" % self.indices[name]
@@ -5082,14 +5081,10 @@ class StringNode:
 
   def dump_debug( self, write, margin ):
     # this is used during debugging
-    line = margin + "+-"
-    if len( self.letter ) == 0:
-      line += "<NOLETTER>"
-    else:
-      line += self.letter
-
+    line = f"{margin}+-"
+    line += "<NOLETTER>" if len( self.letter ) == 0 else self.letter
     if self.value:
-      line += " => " + repr( self.value )
+      line += f" => {repr(self.value)}"
 
     write( line + "\n" )
 
@@ -5100,11 +5095,7 @@ class StringNode:
 
   def locate( self, index ):
     self.index = index
-    if len( self.letter ) > 0:
-      index += len( self.letter ) + 1
-    else:
-      index += 2
-
+    index += len( self.letter ) + 1 if len( self.letter ) > 0 else 2
     if self.value != 0:
       index += 2
 
@@ -5188,8 +5179,9 @@ def dump_encoding( file, encoding_name, encoding_list ):
 
   write = file.write
   write( "  /* the following are indices into the SID name table */\n" )
-  write( "  static const unsigned short  " + encoding_name +
-         "[" + repr( len( encoding_list ) ) + "] =\n" )
+  write((
+      f"  static const unsigned short  {encoding_name}[{repr(len(encoding_list))}"
+      + "] =\n"))
   write( "  {\n" )
 
   line  = "    "
@@ -5210,8 +5202,8 @@ def dump_encoding( file, encoding_name, encoding_list ):
 def dump_array( the_array, write, array_name ):
   """dumps a given encoding"""
 
-  write( "  static const unsigned char  " + array_name +
-         "[" + repr( len( the_array ) ) + "L] =\n" )
+  write((f"  static const unsigned char  {array_name}[{repr(len(the_array))}" +
+         "L] =\n"))
   write( "  {\n" )
 
   line  = ""

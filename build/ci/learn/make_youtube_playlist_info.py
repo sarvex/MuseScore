@@ -86,17 +86,15 @@ PLAYLIST_FILE = sys.argv[3]
 
 print("=== Read json file ===")
 
-json_file = open(PLAYLIST_FILE, "r+")
-jsonDict = json.load(json_file)
-json_file.close()
-
+with open(PLAYLIST_FILE, "r+") as json_file:
+    jsonDict = json.load(json_file)
 print("=== Get playlist items ===")
 
 headers = {
     'Accept': 'application/json',
 }
 
-url = YOUTUBE_API_URL + f"/playlistItems?part=snippet&playlistId={PLAYLIST_ID}&key={YOUTUBE_API_KEY}&maxResults={MAX_NUMBER_OF_RESULT_ITEMS}"
+url = f"{YOUTUBE_API_URL}/playlistItems?part=snippet&playlistId={PLAYLIST_ID}&key={YOUTUBE_API_KEY}&maxResults={MAX_NUMBER_OF_RESULT_ITEMS}"
 r = requests.get(url, headers=headers)
 
 playlist_items = json.loads(r.text)
@@ -111,7 +109,7 @@ params = f"part=snippet,contentDetails&key={YOUTUBE_API_KEY}&maxResults={MAX_NUM
 for item_id in playlist_items_ids:
     params += f"&id={item_id}"
 
-url = YOUTUBE_API_URL + f"/videos?{params}"
+url = f"{YOUTUBE_API_URL}/videos?{params}"
 r = requests.get(url, headers=headers)
 
 playlist_videos_info = json.loads(r.text)
@@ -128,6 +126,5 @@ for item in playlist:
                 "durationSecs": item.durationSecs }
     jsonDict["default"].append(new_item)
 
-json_file = open(PLAYLIST_FILE, "w")
-json_file.write(json.dumps(jsonDict, indent=4))
-json_file.close()
+with open(PLAYLIST_FILE, "w") as json_file:
+    json_file.write(json.dumps(jsonDict, indent=4))

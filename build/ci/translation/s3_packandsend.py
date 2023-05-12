@@ -16,8 +16,8 @@ outputDir = "share/locale/"
 s3Urls = ["s3://extensions.musescore.org/4.0/languages/"]
 
 def processTsFile(prefix, langCode, data):
-    print("Processing " + langCode)
-    filename = prefix + '_' + lang_code
+    print(f"Processing {langCode}")
+    filename = f'{prefix}_{lang_code}'
     tsFilePath = outputDir + filename + ".ts"
     qmFilePath = outputDir + filename + ".qm"
 
@@ -35,48 +35,37 @@ def processTsFile(prefix, langCode, data):
         file_size = os.path.getsize(qmFilePath)
         file_size = "%.2f" % (file_size / 1024)
 
-        #compute Qm file hash
-        file = open(qmFilePath, 'rb')
-        hash_file = hashlib.sha1()
-        hash_file.update(file.read())
-        file.close()
-
+        with open(qmFilePath, 'rb') as file:
+            hash_file = hashlib.sha1()
+            hash_file.update(file.read())
         if lang_code not in data:
             data[lang_code] = {}
         if prefix not in data[lang_code]:
             data[lang_code][prefix] = {}
 
-        data[lang_code][prefix]["file_name"] = filename + ".qm"
+        data[lang_code][prefix]["file_name"] = f"{filename}.qm"
         data[lang_code][prefix]["hash"] = str(hash_file.hexdigest())
         data[lang_code][prefix]["file_size"] = file_size
 
         return True
     else:
-        print(prefix + ' ' + lang_code + " not changed")
+        print(f'{prefix} {lang_code} not changed')
         return False
 
 
 newDetailsFile = False
 translationChanged = False
 
-#read languages.json and store language code and name
-langCode_file = open("share/locale/languages.json", "r+")
-langCodeNameDict = json.load(langCode_file)  # language code --> name
-langCode_file.close()
-
-detailsJson = outputDir + "details.json"
+with open("share/locale/languages.json", "r+") as langCode_file:
+    langCodeNameDict = json.load(langCode_file)  # language code --> name
+detailsJson = f"{outputDir}details.json"
 # read details.json or create it
 if os.path.isfile(detailsJson):
-    json_file = open(outputDir + "details.json", "r+")
-    data = json.load(json_file)
-    json_file.close()
+    with open(f"{outputDir}details.json", "r+") as json_file:
+        data = json.load(json_file)
 else:
     newDetailsFile = True
-    data = {}
-    data["type"] = "Languages"
-    data["version"] = "2.0"
-
-
+    data = {"type": "Languages", "version": "2.0"}
 translationChanged = newDetailsFile
 for lang_code, languageName in langCodeNameDict.items():
     updateMscore = processTsFile("musescore", lang_code, data)
@@ -87,25 +76,22 @@ for lang_code, languageName in langCodeNameDict.items():
 
     if (updateMscore or updateInstruments):
         #create a zip file, compute size, hash, add it to json and save to s3
-        zipName = 'locale_' + lang_code + '.zip'
+        zipName = f'locale_{lang_code}.zip'
         zipPath = outputDir + zipName
         myzip = zipfile.ZipFile(zipPath, mode='w')
-        qmFilePath = outputDir + 'musescore_' + lang_code + ".qm"
-        myzip.write(qmFilePath, 'musescore_' + lang_code + ".qm")
-        qmFilePath = outputDir + 'instruments_' + lang_code + ".qm"
-        myzip.write(qmFilePath, 'instruments_' + lang_code + ".qm")
+        qmFilePath = f'{outputDir}musescore_{lang_code}.qm'
+        myzip.write(qmFilePath, f'musescore_{lang_code}.qm')
+        qmFilePath = f'{outputDir}instruments_{lang_code}.qm'
+        myzip.write(qmFilePath, f'instruments_{lang_code}.qm')
         myzip.close()
 
         # get zip file size
         file_size = os.path.getsize(zipPath)
         file_size = "%.2f" % (file_size / 1024)
 
-        #compute zip file hash
-        file = open(zipPath, 'rb')
-        hash_file = hashlib.sha1()
-        hash_file.update(file.read())
-        file.close()
-
+        with open(zipPath, 'rb') as file:
+            hash_file = hashlib.sha1()
+            hash_file.update(file.read())
         data[lang_code]["file_name"] = zipName
         data[lang_code]["name"] = langCodeNameDict[lang_code]
         data[lang_code]["hash"] = str(hash_file.hexdigest())
@@ -115,13 +101,20 @@ for lang_code, languageName in langCodeNameDict.items():
             push_zip.communicate()
 
 
-json_file = open(outputDir + "details.json", "w")
-json_file.write(json.dumps(data, sort_keys=True, indent=4))
-json_file.close()
-
+with open(f"{outputDir}details.json", "w") as json_file:
+    json_file.write(json.dumps(data, sort_keys=True, indent=4))
 if translationChanged:
     for s3Url in s3Urls:
-        push_json = subprocess.Popen(['s3cmd','put','--acl-public', '--guess-mime-type', outputDir + 'details.json', s3Url + 'details.json'])
+        push_json = subprocess.Popen(
+            [
+                's3cmd',
+                'put',
+                '--acl-public',
+                '--guess-mime-type',
+                f'{outputDir}details.json',
+                f'{s3Url}details.json',
+            ]
+        )
         push_json.communicate()
 
 

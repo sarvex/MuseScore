@@ -39,11 +39,7 @@ class MyWidget(QtWidgets.QWidget):
         maxWidth = int(0.80 * self.size().width())
         maxHeight = int(0.80 * self.size().height())
         proposedHeight = int(maxWidth * ratio)
-        if (proposedHeight <= maxHeight):
-            width = maxWidth
-        else:
-            width = int(maxHeight / ratio)
-
+        width = maxWidth if (proposedHeight <= maxHeight) else int(maxHeight / ratio)
         height = int(width * ratio)
         targetLogoRect = QtCore.QRect(0,0, width, height)
         targetLogoRect.moveCenter(self.rect().center() + QtCore.QPoint(0, -int(self.size().height() * 0.00)))

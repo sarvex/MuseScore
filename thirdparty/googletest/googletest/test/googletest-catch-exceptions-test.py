@@ -35,13 +35,14 @@ googletest-catch-exceptions-ex-test_ (programs written with
 Google Test) and verifies their output.
 """
 
+
 import gtest_test_utils
 
 # Constants.
 FLAG_PREFIX = '--gtest_'
-LIST_TESTS_FLAG = FLAG_PREFIX + 'list_tests'
-NO_CATCH_EXCEPTIONS_FLAG = FLAG_PREFIX + 'catch_exceptions=0'
-FILTER_FLAG = FLAG_PREFIX + 'filter'
+LIST_TESTS_FLAG = f'{FLAG_PREFIX}list_tests'
+NO_CATCH_EXCEPTIONS_FLAG = f'{FLAG_PREFIX}catch_exceptions=0'
+FILTER_FLAG = f'{FLAG_PREFIX}filter'
 
 # Path to the googletest-catch-exceptions-ex-test_ binary, compiled with
 # exceptions enabled.
@@ -219,7 +220,7 @@ class CatchCxxExceptionsTest(gtest_test_utils.TestCase):
   def testUnhandledCxxExceptionsAbortTheProgram(self):
     # Filters out SEH exception tests on Windows. Unhandled SEH exceptions
     # cause tests to show pop-up windows there.
-    FITLER_OUT_SEH_TESTS_FLAG = FILTER_FLAG + '=-*Seh*'
+    FITLER_OUT_SEH_TESTS_FLAG = f'{FILTER_FLAG}=-*Seh*'
     # By default, Google Test doesn't catch the exceptions.
     uncaught_exceptions_ex_binary_output = gtest_test_utils.Subprocess(
         [EX_EXE_PATH,

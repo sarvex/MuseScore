@@ -44,22 +44,19 @@ def tr_error(message_element, description, resolution, hint=''):
 
 superscript_numbers = '¹²³⁴⁵⁶⁷⁸⁹'
 
-os.chdir(sys.path[0] + '/../..') # make all paths relative to repository root
+os.chdir(f'{sys.path[0]}/../..')
 
 source_lang = 'en'
 target_lang = 'en@placeholder'  # Substring before '@' must correspond to a real
-                                # locale for plurals to work. We must provide as
-                                # many plural forms as are required by the locale.
-
-source_lang_ts = source_lang + '.ts'
-target_lang_ts = target_lang + '.ts'
+source_lang_ts = f'{source_lang}.ts'
+target_lang_ts = f'{target_lang}.ts'
 
 eprint(f'{sys.argv[0]}: Generating fake translations for testing purposes.')
 
-for source_file in glob.glob('share/locale/*_' + source_lang_ts):
+for source_file in glob.glob(f'share/locale/*_{source_lang_ts}'):
     target_file = source_file[:-len(source_lang_ts)] + target_lang_ts
 
-    eprint("Reading " + source_file)
+    eprint(f"Reading {source_file}")
     tree = ET.parse(source_file)
     root = tree.getroot()
 
@@ -71,8 +68,7 @@ for source_file in glob.glob('share/locale/*_' + source_lang_ts):
         translation = message.find('translation')
         plurals = translation.findall('numerusform')
 
-        bytes = source.findall('byte')
-        if bytes:
+        if bytes := source.findall('byte'):
             values = ', '.join([ f"'{b.get('value')}'" for b in bytes ])
             if len(bytes) == 1:
                 tr_error(message, f'Translated string contains illegal byte: {values}.',
@@ -114,15 +110,15 @@ for source_file in glob.glob('share/locale/*_' + source_lang_ts):
         tr_txt = re.sub(r'%([1-9]+)', r'⌜%\1⌝', tr_txt)
 
         # identify start and end of translated string
-        tr_txt = '«' + tr_txt + '»'
+        tr_txt = f'«{tr_txt}»'
 
         if plurals:
             for idx, plural in enumerate(plurals):
-                plural.text = 'ᵗʳ' + superscript_numbers[idx] + tr_txt
+                plural.text = f'ᵗʳ{superscript_numbers[idx]}{tr_txt}'
         else:
-            translation.text = 'ᵗʳ' + tr_txt
+            translation.text = f'ᵗʳ{tr_txt}'
 
-    eprint("Writing " + target_file)
+    eprint(f"Writing {target_file}")
     # Tweak ElementTree's XML formatting to match that of Qt's lupdate. The aim
     # is to minimise the diff between source_file and target_file.
     for el in root.findall('.//'):

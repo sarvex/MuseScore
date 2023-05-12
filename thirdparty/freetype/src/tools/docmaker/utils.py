@@ -38,10 +38,10 @@ def  index_key( s ):
 
 # Sort `input_list', placing the elements of `order_list' in front.
 #
-def  sort_order_list( input_list, order_list ):
+def sort_order_list( input_list, order_list ):
     new_list = order_list[:]
     for id in input_list:
-        if not id in order_list:
+        if id not in order_list:
             new_list.append( id )
     return new_list
 
@@ -72,17 +72,17 @@ def  close_output( output ):
 
 # Check output directory.
 #
-def  check_output():
+def check_output():
     global output_dir
     if output_dir:
-        if output_dir != "":
-            if not os.path.isdir( output_dir ):
-                sys.stderr.write( "argument"
-                                  + " '" + output_dir + "' "
-                                  + "is not a valid directory\n" )
-                sys.exit( 2 )
-        else:
+        if output_dir == "":
             output_dir = None
+
+        elif not os.path.isdir( output_dir ):
+            sys.stderr.write( "argument"
+                              + " '" + output_dir + "' "
+                              + "is not a valid directory\n" )
+            sys.exit( 2 )
 
 
 def  file_exists( pathname ):
@@ -98,7 +98,7 @@ def  file_exists( pathname ):
     return result
 
 
-def  make_file_list( args = None ):
+def make_file_list( args = None ):
     """Build a list of input files from command-line arguments."""
     file_list = []
     # sys.stderr.write( repr( sys.argv[1 :] ) + '\n' )
@@ -116,12 +116,6 @@ def  make_file_list( args = None ):
 
         file_list.extend( newpath )
 
-    if len( file_list ) == 0:
-        file_list = None
-    else:
-        # now filter the file list to remove non-existing ones
-        file_list = filter( file_exists, file_list )
-
-    return file_list
+    return None if not file_list else filter( file_exists, file_list )
 
 # eof

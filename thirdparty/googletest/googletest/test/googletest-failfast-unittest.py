@@ -92,18 +92,18 @@ def RunAndReturnOutput(test_suite=None, fail_fast=None, run_disabled=False):
   args = []
   xml_path = os.path.join(gtest_test_utils.GetTempDir(),
                           '.GTestFailFastUnitTest.xml')
-  args += ['--gtest_output=xml:' + xml_path]
+  args += [f'--gtest_output=xml:{xml_path}']
   if fail_fast is not None:
     if isinstance(fail_fast, str):
-      args += ['--%s=%s' % (FAIL_FAST_FLAG, fail_fast)]
+      args += [f'--{FAIL_FAST_FLAG}={fail_fast}']
     elif fail_fast:
-      args += ['--%s' % FAIL_FAST_FLAG]
+      args += [f'--{FAIL_FAST_FLAG}']
     else:
-      args += ['--no%s' % FAIL_FAST_FLAG]
+      args += [f'--no{FAIL_FAST_FLAG}']
   if test_suite:
-    args += ['--%s=%s.*' % (FILTER_FLAG, test_suite)]
+    args += [f'--{FILTER_FLAG}={test_suite}.*']
   if run_disabled:
-    args += ['--%s' % RUN_DISABLED_FLAG]
+    args += [f'--{RUN_DISABLED_FLAG}']
   txt_out = gtest_test_utils.Subprocess([COMMAND] + args, env=environ).output
   with open(xml_path) as xml_file:
     return txt_out, xml_file.read()
@@ -213,15 +213,17 @@ class GTestFailFastUnitTest(gtest_test_utils.TestCase):
 
   def assertXmlResultCount(self, result, count, xml):
     self.assertEqual(
-        count, xml.count('result="%s"' % result),
-        'Expected \'result="%s"\' match count of %s: %s ' %
-        (result, count, xml))
+        count,
+        xml.count(f'result="{result}"'),
+        'Expected \'result="%s"\' match count of %s: %s ' % (result, count, xml),
+    )
 
   def assertXmlStatusCount(self, status, count, xml):
     self.assertEqual(
-        count, xml.count('status="%s"' % status),
-        'Expected \'status="%s"\' match count of %s: %s ' %
-        (status, count, xml))
+        count,
+        xml.count(f'status="{status}"'),
+        'Expected \'status="%s"\' match count of %s: %s ' % (status, count, xml),
+    )
 
   def assertFailFastXmlAndTxtOutput(self,
                                     fail_fast,
@@ -235,11 +237,11 @@ class GTestFailFastUnitTest(gtest_test_utils.TestCase):
 
     txt, xml = RunAndReturnOutput(test_suite, fail_fast, run_disabled)
     if failure_count > 0:
-      self.assertIn('%s FAILED TEST' % failure_count, txt)
+      self.assertIn(f'{failure_count} FAILED TEST', txt)
     if suppressed_count > 0:
-      self.assertIn('%s DISABLED TEST' % suppressed_count, txt)
+      self.assertIn(f'{suppressed_count} DISABLED TEST', txt)
     if skipped_count > 0:
-      self.assertIn('[  SKIPPED ] %s tests' % skipped_count, txt)
+      self.assertIn(f'[  SKIPPED ] {skipped_count} tests', txt)
     self.assertXmlStatusCount('run',
                               passed_count + failure_count + skipped_count, xml)
     self.assertXmlStatusCount('notrun', suppressed_count, xml)

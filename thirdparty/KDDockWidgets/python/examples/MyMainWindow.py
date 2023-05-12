@@ -20,10 +20,7 @@ from MyWidget3 import MyWidget3
 def newMyWidget(parent = None):
     randomNumber = QtCore.QRandomGenerator.global_().bounded(0, 100) + 1
     if (randomNumber < 50):
-        if (randomNumber < 33):
-            return MyWidget1(parent)
-        else:
-            return MyWidget3(parent)
+        return MyWidget1(parent) if (randomNumber < 33) else MyWidget3(parent)
     else:
         return MyWidget2(parent)
 
@@ -95,14 +92,10 @@ class MyMainWindow(KDDockWidgets.MainWindow):
             dw.close()
 
     def createDockWidgets(self):
-        if self.m_dockWidget9IsNonDockable:
-            numDockWidgets = 10
-        else:
-            numDockWidgets = 9
-
+        numDockWidgets = 10 if self.m_dockWidget9IsNonDockable else 9
         # numDockWidgets = 2
         # Create 9 KDDockWidget::DockWidget and the respective widgets they're hosting (MyWidget instances)
-        for i in range(numDockWidgets):
+        for _ in range(numDockWidgets):
             self.m_dockwidgets.append(self.newDockWidget())
 
         # MainWindow::addDockWidget() attaches a dock widget to the main window:
@@ -111,7 +104,7 @@ class MyMainWindow(KDDockWidgets.MainWindow):
 
         # Here, for finer granularity we specify right of dockwidgets[0]:
         self.addDockWidget(self.m_dockwidgets[1], KDDockWidgets.Location_OnRight, self.m_dockwidgets[0])
-        
+
         self.addDockWidget(self.m_dockwidgets[2], KDDockWidgets.Location_OnLeft)
         self.addDockWidget(self.m_dockwidgets[3], KDDockWidgets.Location_OnBottom)
         self.addDockWidget(self.m_dockwidgets[4], KDDockWidgets.Location_OnBottom)

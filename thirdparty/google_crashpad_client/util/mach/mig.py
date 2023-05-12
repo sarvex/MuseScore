@@ -74,7 +74,7 @@ def main(args):
 
     for arch in parsed.arch:
         # Python 3: use tempfile.TempDirectory instead
-        temp_dir = tempfile.mkdtemp(prefix=os.path.basename(sys.argv[0]) + '_')
+        temp_dir = tempfile.mkdtemp(prefix=f'{os.path.basename(sys.argv[0])}_')
         try:
             user_c = os.path.join(temp_dir, os.path.basename(parsed.user_c))
             server_c = os.path.join(temp_dir, os.path.basename(parsed.server_c))

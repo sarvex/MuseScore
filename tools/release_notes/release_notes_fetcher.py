@@ -15,7 +15,11 @@ def git_log(git_dir, rev1, rev2):
     os.chdir(git_dir)
 
     # %s for subject (message)
-    git = subprocess.run(["git", "log", "--format=format:%s", "{}..{}".format(rev1, rev2)], capture_output=True, text=True)
+    git = subprocess.run(
+        ["git", "log", "--format=format:%s", f"{rev1}..{rev2}"],
+        capture_output=True,
+        text=True,
+    )
 
     os.chdir(cwd)
     return git.stdout
@@ -27,19 +31,15 @@ def get_node_info(node):
     node_url = get_node_url(node)
 
     try:
-    	response = urllib.request.urlopen(node_url)
+        response = urllib.request.urlopen(node_url)
     except urllib.error.HTTPError as e:
-        print('Issue not found! HTTP response code: ' + str(e.code))
-        return {"node": node, "url": node_url, "title": "!!!!! HTTP " + str(e.code)}
+        print(f'Issue not found! HTTP response code: {str(e.code)}')
+        return {"node": node, "url": node_url, "title": f"!!!!! HTTP {str(e.code)}"}
 
     html = str(response.read())
 
-    # We may need some more complex HTML parsing to get
-    # more info but just for title regex is enough
-    title_match = re.search("\<title\>(.*)\</title\>", html)
-
-    if title_match:
-        title = title_match.group(1)
+    if title_match := re.search("\<title\>(.*)\</title\>", html):
+        title = title_match[1]
         trailer_idx = title.rfind('|') # the expected page title format is "{node_title} | MuseScore"
         title = title[:trailer_idx].rstrip()
     else:
@@ -68,7 +68,7 @@ if __name__ == "__main__":
                 issues.add(int(fix_match.group(1)))
                 issue = True
 
-        if not issue and not "Merge pull request #" in msg:
+        if not issue and "Merge pull request #" not in msg:
             non_issues.append(msg)
 
     print("Changes not directly related to issues:", len(non_issues))
